@@ -59,9 +59,8 @@ defmodule SeeThroughBurrito.Pipeline do
 
     case SeeThroughBurrito.Models.run_inference(unet, {latents, embeddings}) do
       {:ok, noise_pred} ->
-        # Simple guidance scaling (classifier-free guidance)
-        guided = scale_guidance(noise_pred, guidance)
-        new_latents = denoise_step(latents, guided)
+        guided = Nx.multiply(noise_pred, guidance)
+        new_latents = Nx.subtract(latents, guided)
         diffuse_loop(unet, new_latents, embeddings, step - 1, guidance, [new_latents | acc])
 
       {:error, reason} ->
@@ -69,12 +68,4 @@ defmodule SeeThroughBurrito.Pipeline do
     end
   end
 
-  defp scale_guidance(noise, scale) do
-    Nx.multiply(noise, scale)
-  end
-
-  defp denoise_step(latents, noise) do
-    # DDIM step: simple version for now
-    Nx.subtract(latents, noise)
-  end
 end

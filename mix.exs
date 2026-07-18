@@ -9,7 +9,12 @@ defmodule SeeThroughBurrito.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       escript: [main_module: SeeThroughBurrito.CLI],
-      aliases: aliases()
+      aliases: aliases(),
+      dialyzer: [
+        plt_add_apps: [:ex_unit],
+        plt_core_path: "priv/plts",
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+      ]
     ]
   end
 
@@ -19,7 +24,8 @@ defmodule SeeThroughBurrito.MixProject do
       "test.gpu": "test --include skip",
       bench: "run benchmarks/tensor_ops.exs",
       release: "burrito.build",
-      cli: "escript.build"
+      cli: "escript.build",
+      dialyzer: "dialyzer --format short"
     ]
   end
 
@@ -52,6 +58,7 @@ defmodule SeeThroughBurrito.MixProject do
       # Testing
       {:propcheck, "~> 1.4", only: :test},
       {:benchee, "~> 1.0", only: :dev},
+      {:dialyxir, "~> 1.4", only: :dev, runtime: false},
 
       # HTTP client for model downloads
       {:httpoison, "~> 2.0"},

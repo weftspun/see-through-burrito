@@ -20,15 +20,18 @@ defmodule SeeThroughBurrito.Images do
   @doc "Convert image to RGB tensor (0-1 range)"
   def to_rgb_tensor(image) do
     try do
-      # Image library returns Vix image, convert via as_tensor or binary
+      # Image library returns Vix image, convert via tensor
       width = Image.width(image)
       height = Image.height(image)
 
-      # Use Image.write to get binary data
-      case Image.write(image, suffix: ".ppm") do
-        {:ok, binary} ->
-          # Parse PPM format (simple, uncompressed)
-          parse_ppm_binary(binary, width, height)
+      # Convert image to tensor directly (Image library supports this)
+      case Image.to_tensor(image) do
+        {:ok, tensor} ->
+          # tensor should be in [0, 255] uint8 format, convert to [0, 1] float32
+          tensor
+          |> Nx.as_type(:f32)
+          |> Nx.divide(255.0)
+          |> then(&{:ok, &1})
 
         {:error, reason} ->
           {:error, {:rgb_conversion_failed, reason}}
@@ -40,25 +43,6 @@ defmodule SeeThroughBurrito.Images do
     end
   end
 
-  # Parse PPM binary format to tensor
-  defp parse_ppm_binary(binary, width, height) do
-    # PPM format: "P6\n{width} {height}\n255\n{raw_rgb_bytes}"
-    # Skip header
-    case String.split(binary, "\n", parts: 4) do
-      [_format, _dims, _max, rgb_data] ->
-        rgb_data
-        |> Nx.from_binary(:u8)
-        |> Nx.reshape({height, width, 3})
-        |> Nx.as_type(:f32)
-        |> Nx.divide(255.0)
-        |> then(&{:ok, &1})
-
-      _ ->
-        {:error, {:ppm_parse_failed, "Invalid PPM format"}}
-    end
-  rescue
-    _e -> {:error, {:ppm_parse_error, binary}}
-  end
 
   @doc "Normalize image for model input (ImageNet normalization)"
   def normalize(tensor) do
