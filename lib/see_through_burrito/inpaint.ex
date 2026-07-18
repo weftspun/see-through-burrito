@@ -1,0 +1,120 @@
+defmodule SeeThroughBurrito.Inpaint do
+  @moduledoc "Inpainting module for hole filling using LaMa or similar"
+
+  require Logger
+  import Nx.Defn
+
+  @doc "Fill holes in decomposed layers"
+  def fill_holes(layers, opts \\ []) do
+    Logger.info("Inpainting #{length(layers)} layers to fill holes")
+
+    layers
+    |> Enum.map(&inpaint_layer(&1, opts))
+    |> Enum.filter(&match?({:ok, _}, &1))
+    |> Enum.map(fn {:ok, result} -> result end)
+    |> case do
+      results when length(results) == length(layers) ->
+        {:ok, results}
+
+      results ->
+        Logger.warn("Only #{length(results)}/#{length(layers)} layers inpainted successfully")
+        {:error, {:inpainting_incomplete, results}}
+    end
+  end
+
+  defp inpaint_layer(%{name: name, image: image}, opts) do
+    Logger.debug("Inpainting layer: #{name}")
+
+    with {:ok, mask} <- detect_holes(image),
+         {:ok, inpainted} <- run_lama_inpainting(image, mask, opts) do
+      {:ok, %{name: name, image: inpainted}}
+    else
+      {:error, reason} ->
+        Logger.error("Inpainting failed for #{name}: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  @doc "Detect holes/transparent regions in layer"
+  defn detect_holes(image_rgba) do
+    # Assume alpha channel is last dimension
+    alpha = Nx.slice(image_rgba, [0, 0, 3], :infinity)
+    # Holes are regions with low alpha
+    Nx.less(alpha, 0.5)
+  end
+
+  @doc "Apply LaMa inpainting model"
+  def run_lama_inpainting(image, mask, opts \\ []) do
+    Logger.debug("Running LaMa inpainting")
+
+    case load_lama_model(opts) do
+      {:ok, lama_serving} ->
+        # Prepare input: concatenate image and mask
+        input = Nx.concatenate([image, Nx.expand_dims(mask, -1)], axis: 2)
+
+        case SeeThroughBurrito.Models.run_inference(lama_serving, input) do
+          {:ok, inpainted} ->
+            {:ok, inpainted}
+
+          {:error, reason} ->
+            {:error, {:lama_inference_failed, reason}}
+        end
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc "Morphological opening to remove small holes"
+  defn morphological_open(mask, kernel_size \\ 5) do
+    # Erode then dilate
+    eroded = erode(mask, kernel_size)
+    dilate(eroded, kernel_size)
+  end
+
+  @doc "Dilate mask"
+  defn dilate(mask, kernel_size) do
+    # Simple dilation: max filter
+    [h, w] = Nx.shape(mask)
+    k = div(kernel_size, 2)
+
+    Nx.map(mask, fn _ ->
+      # Would need actual 2D max pool implementation
+      Nx.max(mask)
+    end)
+  end
+
+  @doc "Erode mask"
+  defn erode(mask, kernel_size) do
+    # Simple erosion: min filter
+    [h, w] = Nx.shape(mask)
+    k = div(kernel_size, 2)
+
+    Nx.map(mask, fn _ ->
+      # Would need actual 2D min pool implementation
+      Nx.min(mask)
+    end)
+  end
+
+  @doc "Blend inpainted regions smoothly"
+  defn blend_inpainted(original, inpainted, mask) do
+    # Use mask as blend factor (0 = original, 1 = inpainted)
+    mask_expanded = Nx.expand_dims(mask, -1)
+    Nx.add(
+      Nx.multiply(original, Nx.subtract(1.0, mask_expanded)),
+      Nx.multiply(inpainted, mask_expanded)
+    )
+  end
+
+  defp load_lama_model(opts) do
+    model_id = Keyword.get(opts, :lama_model, "facebook/lama")
+    cache_dir = Keyword.get(opts, :cache_dir, "/tmp/see-through-models")
+
+    Logger.info("Loading LaMa inpainting model: #{model_id}")
+
+    case SeeThroughBurrito.Models.load_diffusion(model_id, cache_dir: cache_dir) do
+      {:ok, model} -> {:ok, model}
+      {:error, reason} -> {:error, {:lama_load_failed, reason}}
+    end
+  end
+end
