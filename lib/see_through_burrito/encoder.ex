@@ -5,13 +5,15 @@ defmodule SeeThroughBurrito.Encoder do
   require Logger
 
   @doc "Encode image to VAE latent space"
+  @doc "Accepts optional :models adapter in opts for dependency injection"
   @dialyzer {:nowarn_function, encode_to_latents: 2}
   def encode_to_latents(image_tensor, opts \\ []) do
     Logger.info("Encoding image to latent space")
+    models_adapter = Keyword.get(opts, :models, SeeThroughBurrito.Models)
 
     case load_encoder_model(opts) do
       {:ok, encoder_serving} ->
-        case SeeThroughBurrito.Models.run_inference(encoder_serving, image_tensor) do
+        case models_adapter.run_inference(encoder_serving, image_tensor) do
           {:ok, %{"latent_dist" => latents}} ->
             {:ok, latents}
 
@@ -39,13 +41,15 @@ defmodule SeeThroughBurrito.Encoder do
   end
 
   @doc "Decode latents back to image space"
+  @doc "Accepts optional :models adapter in opts for dependency injection"
   @dialyzer {:nowarn_function, decode_from_latents: 2}
   def decode_from_latents(latents, opts \\ []) do
     Logger.info("Decoding latents to image space")
+    models_adapter = Keyword.get(opts, :models, SeeThroughBurrito.Models)
 
     case load_decoder_model(opts) do
       {:ok, decoder_serving} ->
-        case SeeThroughBurrito.Models.run_inference(decoder_serving, latents) do
+        case models_adapter.run_inference(decoder_serving, latents) do
           {:ok, image} ->
             {:ok, image}
 

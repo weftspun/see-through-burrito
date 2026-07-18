@@ -50,9 +50,13 @@ defmodule SeeThroughBurrito.Layers do
   end
 
   defp decompose_layers(unet, latents, layers, steps, opts) do
+    # Extract adapters from opts, with defaults
+    pipeline_adapter = Keyword.get(opts, :pipeline, SeeThroughBurrito.Pipeline)
+    encoder_adapter = Keyword.get(opts, :encoder, SeeThroughBurrito.Encoder)
+
     results =
       layers
-      |> Enum.map(&extract_layer(unet, latents, &1, steps, opts))
+      |> Enum.map(&extract_layer(unet, latents, &1, steps, opts, pipeline_adapter, encoder_adapter))
       |> Enum.filter(&match?({:ok, _}, &1))
       |> Enum.map(fn {:ok, result} -> result end)
 
@@ -63,21 +67,21 @@ defmodule SeeThroughBurrito.Layers do
     end
   end
 
-  @dialyzer {:nowarn_function, extract_layer: 5}
-  defp extract_layer(unet, latents, layer_name, steps, opts) do
+  @dialyzer {:nowarn_function, extract_layer: 7}
+  defp extract_layer(unet, latents, layer_name, steps, opts, pipeline_adapter, encoder_adapter) do
     Logger.debug("Extracting layer: #{layer_name}")
 
     # Run diffusion conditioned on layer prompt
     prompt = "#{layer_name} layer"
 
-    case SeeThroughBurrito.Pipeline.encode_prompt(prompt, nil, nil) do
+    case pipeline_adapter.encode_prompt(prompt, nil, nil, opts) do
       {:ok, embeddings} ->
-        case SeeThroughBurrito.Pipeline.run_diffusion(unet, latents, embeddings, steps: steps) do
+        case pipeline_adapter.run_diffusion(unet, latents, embeddings, Keyword.merge(opts, steps: steps)) do
           {:ok, outputs} ->
             # Decode final latent to image
             final_latent = List.last(outputs)
 
-            case SeeThroughBurrito.Encoder.decode_from_latents(final_latent, opts) do
+            case encoder_adapter.decode_from_latents(final_latent, opts) do
               {:ok, layer_image} ->
                 {:ok, %{name: layer_name, image: layer_image}}
 

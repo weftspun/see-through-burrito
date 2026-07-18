@@ -48,16 +48,18 @@ defmodule SeeThroughBurrito.Inpaint do
   end
 
   @doc "Apply LaMa inpainting model"
+  @doc "Accepts optional :models adapter in opts for dependency injection"
   @dialyzer {:nowarn_function, run_lama_inpainting: 3}
   def run_lama_inpainting(image, mask, opts \\ []) do
     Logger.debug("Running LaMa inpainting")
+    models_adapter = Keyword.get(opts, :models, SeeThroughBurrito.Models)
 
     case load_lama_model(opts) do
       {:ok, lama_serving} ->
         # Prepare input: concatenate image and mask
         input = Nx.concatenate([image, Nx.new_axis(mask, -1)], axis: 2)
 
-        case SeeThroughBurrito.Models.run_inference(lama_serving, input) do
+        case models_adapter.run_inference(lama_serving, input) do
           {:ok, inpainted} ->
             {:ok, inpainted}
 
