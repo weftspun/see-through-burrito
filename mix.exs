@@ -23,6 +23,10 @@ defmodule SeeThroughBurrito.MixProject do
     ]
   end
 
+  def cli do
+    [preferred_envs: ["test.gpu": :test, bench: :dev, release: :prod, cli: :dev]]
+  end
+
   def application do
     [
       extra_applications: [:logger],
@@ -46,7 +50,7 @@ defmodule SeeThroughBurrito.MixProject do
       {:burrito, "~> 1.0"},
 
       # Testing
-      {:stream_data, "~> 1.0", only: :test},
+      {:propcheck, "~> 1.4", only: :test},
       {:benchee, "~> 1.0", only: :dev},
 
       # HTTP client for model downloads
