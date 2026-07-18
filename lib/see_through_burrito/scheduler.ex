@@ -1,11 +1,13 @@
 defmodule SeeThroughBurrito.Scheduler do
   @moduledoc """
   Diffusion schedulers for noise prediction.
-  Ported from see-through-cpp/src/scheduler.cpp
 
-  Implements:
+  Fallback implementations from see-through-cpp/src/scheduler.cpp when
+  Bumblebee.Diffusion schedulers are not available:
   - DPM-Solver++ 2M SDE (for LayerDiff)
   - DDIM Trailing (for Marigold)
+
+  Note: Bumblebee 0.7.0 may provide these directly via Bumblebee.Diffusion
   """
 
   require Logger
@@ -31,10 +33,12 @@ defmodule SeeThroughBurrito.Scheduler do
         Float.round((num_steps - k) * ratio) + 1
       end)
 
-    # Compute sigmas
+    # Compute sigmas (clamp timesteps to valid range)
     sigmas =
       Enum.map(timesteps, fn t ->
-        alpha_t = Enum.at(ac, t)
+        # Clamp t to valid range [0, length(ac)-1]
+        clamped_t = min(max(trunc(t), 0), length(ac) - 1)
+        alpha_t = Enum.at(ac, clamped_t)
         :math.sqrt((1.0 - alpha_t) / alpha_t)
       end) ++ [0.0]
 
