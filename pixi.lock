@@ -1,0 +1,9 @@
+version: 7
+platforms: []
+environments:
+  default:
+    channels:
+    - url: https://conda.anaconda.org/nvidia/
+    - url: https://conda.anaconda.org/conda-forge/
+    packages: {}
+packages: []

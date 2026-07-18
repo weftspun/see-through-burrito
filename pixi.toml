@@ -1,0 +1,12 @@
+[project]
+name = "see-through-burrito"
+version = "0.1.0"
+description = "Elixir anime illustration decomposition with GPU"
+authors = ["K. S. Ernest Lee <ernest.lee@chibifire.com>"]
+channels = ["nvidia", "conda-forge"]
+
+[dependencies]
+# CUDA and GPU libraries
+cuda-runtime = "13.1.*"
+cudnn = "9.*"
+nccl = "2.*"
