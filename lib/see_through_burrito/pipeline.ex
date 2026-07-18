@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Pipeline do
   @moduledoc "Main processing pipeline orchestration"
+  @behaviour SeeThroughBurrito.PipelineAdapter
 
   require Logger
   import Nx.Defn
