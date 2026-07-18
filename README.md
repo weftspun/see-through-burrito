@@ -147,14 +147,29 @@ config :exla,
 
 ## Model Weights
 
-Models are downloaded automatically from Hugging Face on first run:
-- `shitagaki-lab/layerdiff-unet` (LayerDiff diffusion model)
-- `stabilityai/sd-vae-ft-mse` (VAE encoder/decoder)
-- `prs-eth/marigold-v1` (Depth estimation)
-- `facebook/lama` (Inpainting)
-- CLIP text encoders (for prompting)
+Model weights are distributed as release artifacts (safetensors format, compressed with zstd):
 
-Cached in `$XDG_CACHE_HOME/huggingface` or `/tmp/see-through-models`.
+**Release**: [v0.1.0-models](https://github.com/weftspun/see-through-burrito/releases/tag/v0.1.0-models)
+
+Models auto-download on first run:
+- `layerdiff-unet.safetensors.zst` (LayerDiff UNet, ~2GB)
+- `trans-vae.safetensors.zst` (TransparentVAE, ~512MB)
+- `sd-vae-ft-mse.safetensors.zst` (SD VAE encoder/decoder, ~256MB)
+- `marigold-unet.safetensors.zst` (Depth estimation, ~1GB)
+- `lama.safetensors.zst` (Inpainting, ~512MB)
+- `clip-vit-large-patch14.safetensors.zst` (CLIP-L text encoder, ~256MB)
+- `clip-vit-g-14.safetensors.zst` (OpenCLIP-G text encoder, ~1GB)
+
+Cached in `$XDG_CACHE_HOME/see-through-burrito/models` (default: `~/.cache/see-through-burrito/models`).
+
+**Preparing Release Models**:
+```bash
+# Download from HuggingFace and compress
+./scripts/prepare_models.sh ./models_release
+
+# Upload *.zst files to GitHub release
+# Update @release_base and @release_tag in model_download.ex
+```
 
 ## TODO
 

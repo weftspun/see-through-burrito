@@ -38,6 +38,14 @@ defmodule SeeThroughBurrito.CLI do
     Logger.info("Processing: #{input_path} -> #{output_path}")
     Logger.info("Format: #{format}")
 
+    # Check/download models
+    case check_models(opts) do
+      :ok -> :ok
+      {:error, reason} ->
+        Logger.error("Model check failed: #{inspect(reason)}")
+        exit(1)
+    end
+
     pipeline_opts = [
       steps: Keyword.get(opts, :steps, 30),
       guidance_scale: Keyword.get(opts, :guidance, 7.5),
@@ -84,6 +92,31 @@ defmodule SeeThroughBurrito.CLI do
 
       _ ->
         {:error, {:unsupported_format, format}}
+    end
+  end
+
+  defp check_models(opts) do
+    cache_dir = Keyword.get(opts, :model_cache, System.get_env("XDG_CACHE_HOME", Path.expand("~/.cache")) <> "/see-through-burrito/models")
+
+    # Check if models need to be downloaded
+    required_models = ["layerdiff-unet", "sd-vae", "marigold-unet", "lama", "clip-l"]
+
+    case Enum.all?(required_models, &SeeThroughBurrito.ModelDownload.cached?(&1, cache_dir: cache_dir)) do
+      true ->
+        Logger.info("✓ All models cached")
+        :ok
+
+      false ->
+        Logger.info("Downloading missing models...")
+
+        case SeeThroughBurrito.ModelDownload.fetch_all(cache_dir: cache_dir) do
+          {:ok, _paths} ->
+            Logger.info("✓ All models ready")
+            :ok
+
+          {:error, reason} ->
+            {:error, {:model_download_failed, reason}}
+        end
     end
   end
 

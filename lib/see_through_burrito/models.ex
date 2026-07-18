@@ -4,34 +4,59 @@ defmodule SeeThroughBurrito.Models do
   require Logger
   alias Bumblebee.Vision
 
-  @doc "Load a diffusion model with Bumblebee"
+  @doc "Load a diffusion model from GGUF weights (release distribution)"
   def load_diffusion(model_id, opts \\ []) do
-    cache_dir = Keyword.get(opts, :cache_dir, "/tmp/see-through-models")
-    File.mkdir_p!(cache_dir)
-
     Logger.info("Loading diffusion model: #{model_id}")
 
-    Bumblebee.load_model({:hf, model_id}, cache_dir: cache_dir)
+    with {:ok, model_path} <- SeeThroughBurrito.ModelDownload.fetch(model_id, opts),
+         {:ok, model} <- load_gguf_model(model_path, opts) do
+      {:ok, model}
+    else
+      {:error, reason} -> {:error, {:diffusion_load_failed, reason}}
+    end
   end
 
-  @doc "Load a VAE model"
+  @doc "Load a VAE model from GGUF weights"
   def load_vae(model_id, opts \\ []) do
-    cache_dir = Keyword.get(opts, :cache_dir, "/tmp/see-through-models")
-    File.mkdir_p!(cache_dir)
-
     Logger.info("Loading VAE model: #{model_id}")
 
-    Bumblebee.load_model({:hf, model_id}, type: :autoencoder, cache_dir: cache_dir)
+    with {:ok, model_path} <- SeeThroughBurrito.ModelDownload.fetch(model_id, opts),
+         {:ok, model} <- load_gguf_model(model_path, opts) do
+      {:ok, model}
+    else
+      {:error, reason} -> {:error, {:vae_load_failed, reason}}
+    end
   end
 
-  @doc "Load a CLIP text encoder"
+  @doc "Load a CLIP text encoder from GGUF weights"
   def load_text_encoder(model_id, opts \\ []) do
-    cache_dir = Keyword.get(opts, :cache_dir, "/tmp/see-through-models")
-    File.mkdir_p!(cache_dir)
-
     Logger.info("Loading text encoder: #{model_id}")
 
-    Bumblebee.load_model({:hf, model_id}, type: :text, cache_dir: cache_dir)
+    with {:ok, model_path} <- SeeThroughBurrito.ModelDownload.fetch(model_id, opts),
+         {:ok, model} <- load_gguf_model(model_path, opts) do
+      {:ok, model}
+    else
+      {:error, reason} -> {:error, {:text_encoder_load_failed, reason}}
+    end
+  end
+
+  defp load_gguf_model(path, _opts) do
+    # Load safetensors weights via Bumblebee
+    Logger.debug("Loading safetensors model from: #{path}")
+
+    case File.exists?(path) do
+      true ->
+        # Bumblebee.load_model expects {:file, path} for local safetensors
+        case Bumblebee.load_model({:file, path}) do
+          {:ok, model} -> {:ok, model}
+          {:error, reason} -> {:error, {:safetensors_load_failed, reason}}
+        end
+
+      false ->
+        {:error, {:model_not_found, path}}
+    end
+  rescue
+    e -> {:error, {:load_safetensors_failed, inspect(e)}}
   end
 
   @doc "Serve a model with Bumblebee and return a serving"
