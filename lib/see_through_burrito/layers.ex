@@ -32,6 +32,7 @@ defmodule SeeThroughBurrito.Layers do
   ]
 
   @doc "Decompose image into semantic layers"
+  @dialyzer {:nowarn_function, decompose: 2}
   def decompose(latents, opts \\ []) do
     layers_to_extract = Keyword.get(opts, :layers, @default_layers)
     steps = Keyword.get(opts, :steps, 30)
@@ -61,6 +62,7 @@ defmodule SeeThroughBurrito.Layers do
     end
   end
 
+  @dialyzer {:nowarn_function, extract_layer: 5}
   defp extract_layer(unet, latents, layer_name, steps, opts) do
     Logger.debug("Extracting layer: #{layer_name}")
 

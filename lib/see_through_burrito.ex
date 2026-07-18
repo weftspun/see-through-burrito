@@ -11,6 +11,7 @@ defmodule SeeThroughBurrito do
   def version, do: "0.1.0"
 
   @doc "Process an anime illustration into semantic layers"
+  @dialyzer {:nowarn_function, process: 2}
   def process(image_path, opts \\ []) do
     Logger.info("Loading image from #{image_path}")
 

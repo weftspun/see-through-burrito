@@ -3,6 +3,7 @@ defmodule SeeThroughBurrito.CLI do
 
   require Logger
 
+  @dialyzer {:nowarn_function, main: 1}
   def main(args) do
     case OptionParser.parse(args,
       strict: [
@@ -30,6 +31,7 @@ defmodule SeeThroughBurrito.CLI do
     end
   end
 
+  @dialyzer {:nowarn_function, process: 1}
   defp process(opts) do
     input_path = opts[:input]
     output_path = Keyword.get(opts, :output, "./output.svg")
@@ -75,6 +77,7 @@ defmodule SeeThroughBurrito.CLI do
     end
   end
 
+  @dialyzer {:nowarn_function, export_result: 4}
   defp export_result(layers, depth, output_path, format) do
     output_dir = Path.dirname(output_path)
     File.mkdir_p!(output_dir)

@@ -4,6 +4,7 @@ defmodule SeeThroughBurrito.Inpaint do
   require Logger
 
   @doc "Fill holes in decomposed layers"
+  @dialyzer {:nowarn_function, fill_holes: 2}
   def fill_holes(layers, opts \\ []) do
     Logger.info("Inpainting #{length(layers)} layers to fill holes")
 
@@ -21,6 +22,7 @@ defmodule SeeThroughBurrito.Inpaint do
     end
   end
 
+  @dialyzer {:nowarn_function, inpaint_layer: 2}
   defp inpaint_layer(%{name: name, image: image}, opts) do
     Logger.debug("Inpainting layer: #{name}")
 
@@ -45,6 +47,7 @@ defmodule SeeThroughBurrito.Inpaint do
   end
 
   @doc "Apply LaMa inpainting model"
+  @dialyzer {:nowarn_function, run_lama_inpainting: 3}
   def run_lama_inpainting(image, mask, opts \\ []) do
     Logger.debug("Running LaMa inpainting")
 

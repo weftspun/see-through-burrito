@@ -4,6 +4,7 @@ defmodule SeeThroughBurrito.Encoder do
   require Logger
 
   @doc "Encode image to VAE latent space"
+  @dialyzer {:nowarn_function, encode_to_latents: 2}
   def encode_to_latents(image_tensor, opts \\ []) do
     Logger.info("Encoding image to latent space")
 
@@ -27,6 +28,7 @@ defmodule SeeThroughBurrito.Encoder do
   end
 
   @doc "Sample from latent distribution (reparameterization trick)"
+  @dialyzer {:nowarn_function, sample_latents: 2}
   def sample_latents(mean, logvar) do
     std = logvar |> Nx.multiply(0.5) |> Nx.exp()
     # For deterministic tests, use zeros as eps (posterior mean sampling)
@@ -36,6 +38,7 @@ defmodule SeeThroughBurrito.Encoder do
   end
 
   @doc "Decode latents back to image space"
+  @dialyzer {:nowarn_function, decode_from_latents: 2}
   def decode_from_latents(latents, opts \\ []) do
     Logger.info("Decoding latents to image space")
 

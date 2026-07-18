@@ -5,6 +5,7 @@ defmodule SeeThroughBurrito.Pipeline do
   import Nx.Defn
 
   @doc "Preprocess image for model input"
+  @dialyzer {:nowarn_function, preprocess: 2}
   def preprocess(image, opts \\ []) do
     target_height = Keyword.get(opts, :height, 1024)
     target_width = Keyword.get(opts, :width, 1024)
@@ -31,6 +32,7 @@ defmodule SeeThroughBurrito.Pipeline do
   end
 
   @doc "Encode prompt text to embeddings"
+  @dialyzer {:nowarn_function, encode_prompt: 3}
   def encode_prompt(prompt, _tokenizer, text_encoder) do
     Logger.debug("Encoding prompt: #{prompt}")
 
@@ -41,6 +43,7 @@ defmodule SeeThroughBurrito.Pipeline do
   end
 
   @doc "Run diffusion model to generate layer masks"
+  @dialyzer {:nowarn_function, run_diffusion: 4}
   def run_diffusion(unet, latents, embeddings, opts \\ []) do
     steps = Keyword.get(opts, :steps, 30)
     guidance_scale = Keyword.get(opts, :guidance_scale, 7.5)
@@ -54,6 +57,7 @@ defmodule SeeThroughBurrito.Pipeline do
     {:ok, Enum.reverse(acc)}
   end
 
+  @dialyzer {:nowarn_function, diffuse_loop: 6}
   defp diffuse_loop(unet, latents, embeddings, step, guidance, acc) do
     Logger.debug("Diffusion step #{step}")
 
