@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Images do
   @moduledoc "Image loading, preprocessing, and manipulation"
+  @behaviour SeeThroughBurrito.ImageAdapter
 
   require Logger
 

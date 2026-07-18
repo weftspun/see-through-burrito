@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Encoder do
   @moduledoc "VAE encoder for image-to-latent conversion"
+  @behaviour SeeThroughBurrito.EncoderAdapter
 
   require Logger
 

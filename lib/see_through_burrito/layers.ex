@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Layers do
   @moduledoc "Semantic layer decomposition using LayerDiff UNet"
+  @behaviour SeeThroughBurrito.LayerAdapter
 
   require Logger
   import Nx.Defn

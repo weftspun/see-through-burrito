@@ -57,6 +57,7 @@ defmodule SeeThroughBurrito.MixProject do
 
       # Testing
       {:propcheck, "~> 1.4", only: :test},
+      {:mox, "~> 1.1", only: :test},
       {:benchee, "~> 1.0", only: :dev},
       {:dialyxir, "~> 1.4", only: :dev, runtime: false},
 

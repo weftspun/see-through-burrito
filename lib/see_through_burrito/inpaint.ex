@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Inpaint do
   @moduledoc "Inpainting module for hole filling using LaMa or similar"
+  @behaviour SeeThroughBurrito.InpaintAdapter
 
   require Logger
 

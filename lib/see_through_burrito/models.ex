@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Models do
   @moduledoc "Model loading and inference wrapper"
+  @behaviour SeeThroughBurrito.ModelAdapter
 
   require Logger
 

@@ -1,5 +1,6 @@
 defmodule SeeThroughBurrito.Depth do
   @moduledoc "Monocular depth estimation using Marigold"
+  @behaviour SeeThroughBurrito.DepthAdapter
 
   require Logger
 
