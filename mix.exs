@@ -8,7 +8,18 @@ defmodule SeeThroughBurrito.MixProject do
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      escript: [main_module: SeeThroughBurrito.CLI]
+      escript: [main_module: SeeThroughBurrito.CLI],
+      aliases: aliases()
+    ]
+  end
+
+  defp aliases do
+    [
+      test: "test --exclude skip",
+      "test.gpu": "test --include skip",
+      bench: "run benchmarks/tensor_ops.exs",
+      release: "burrito.build",
+      cli: "escript.build"
     ]
   end
 
@@ -31,8 +42,8 @@ defmodule SeeThroughBurrito.MixProject do
       {:safetensors, "~> 0.1.3"},
       {:tokenizers, "~> 0.5.1"},
 
-      # Executable packaging (optional for dev - omit if unavailable)
-      # {:burrito, "~> 0.3"},
+      # Executable packaging
+      {:burrito, "~> 1.0"},
 
       # Testing
       {:stream_data, "~> 1.0", only: :test},
