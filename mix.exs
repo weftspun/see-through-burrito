@@ -28,11 +28,8 @@ defmodule SeeThroughBurrito.MixProject do
       # ML model management
       {:bumblebee, "~> 0.5"},
 
-      # Executable packaging
-      {:burrito, "~> 0.5"},
-
       # Property-based testing
-      {:prop_check, "~> 1.4", only: :test},
+      {:stream_data, "~> 1.0", only: :test},
 
       # HTTP client for model downloads
       {:httpoison, "~> 2.0"},
@@ -42,8 +39,7 @@ defmodule SeeThroughBurrito.MixProject do
       {:image, "~> 0.35"},
 
       # SVG output for layer export
-      {:xmlbuilder, "~> 3.0"},
-      {:vega_lite, "~> 0.1"}
+      {:xml_builder, "~> 2.3"}
     ]
   end
 end
