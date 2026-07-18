@@ -11,10 +11,7 @@ config :exla,
   ],
   default_client: :cuda
 
-# Logger
-config :logger,
-  level: :info,
-  backends: [{:console, []}]
+# Logger configuration removed - Elixir 1.20+ uses modern logger
 
 # HTTP timeouts for model downloads
 config :httpoison, timeout: 300_000

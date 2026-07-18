@@ -65,35 +65,55 @@ defmodule SeeThroughBurrito.Inpaint do
     end
   end
 
-  @doc "Morphological opening to remove small holes"
-  defn morphological_open(mask, kernel_size \\ 5) do
-    # Erode then dilate
+  @doc "Morphological opening: erosion followed by dilation"
+  def morphological_open(mask, kernel_size \\ 5) do
     eroded = erode(mask, kernel_size)
     dilate(eroded, kernel_size)
   end
 
-  @doc "Dilate mask"
-  defn dilate(mask, kernel_size) do
-    # Simple dilation: max filter
-    [h, w] = Nx.shape(mask)
-    k = div(kernel_size, 2)
-
-    Nx.map(mask, fn _ ->
-      # Would need actual 2D max pool implementation
-      Nx.max(mask)
-    end)
+  @doc "Morphological dilation: maximum filter over kernel"
+  def dilate(mask, kernel_size) do
+    dilate_impl(mask, kernel_size)
   end
 
-  @doc "Erode mask"
-  defn erode(mask, kernel_size) do
-    # Simple erosion: min filter
-    [h, w] = Nx.shape(mask)
+  @doc "Morphological erosion: minimum filter over kernel"
+  def erode(mask, kernel_size) do
+    erode_impl(mask, kernel_size)
+  end
+
+  # Proper dilation via max pooling (mathematical definition)
+  defp dilate_impl(mask, kernel_size) do
+    # For each pixel, dilation sets it to the maximum value in its kernel neighborhood
     k = div(kernel_size, 2)
 
-    Nx.map(mask, fn _ ->
-      # Would need actual 2D min pool implementation
-      Nx.min(mask)
-    end)
+    # Pad with 0 (so missing pixels don't increase values)
+    padded = Nx.pad(mask, 0.0, [{k, k}, {k, k}])
+
+    # Use Nx.conv to apply max pooling
+    # This is mathematically the proper morphological dilation
+    apply_max_pool(padded, kernel_size)
+  end
+
+  # Proper erosion via min pooling (mathematical definition)
+  defp erode_impl(mask, kernel_size) do
+    # For each pixel, erosion sets it to the minimum value in its kernel neighborhood
+    k = div(kernel_size, 2)
+
+    # Pad with 1.0 (so missing pixels don't decrease values - treat as foreground)
+    padded = Nx.pad(mask, 1.0, [{k, k}, {k, k}])
+
+    # Use custom min pooling
+    apply_min_pool(padded, kernel_size)
+  end
+
+  # Morphological dilation using window reduce (proper mathematical definition)
+  defp apply_max_pool(padded, kernel_size) do
+    Nx.window_reduce(padded, 0.0, {kernel_size, kernel_size}, &Nx.max/2)
+  end
+
+  # Morphological erosion using window reduce (proper mathematical definition)
+  defp apply_min_pool(padded, kernel_size) do
+    Nx.window_reduce(padded, 1.0, {kernel_size, kernel_size}, &Nx.min/2)
   end
 
   @doc "Blend inpainted regions smoothly"

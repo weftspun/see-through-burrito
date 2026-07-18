@@ -2,7 +2,6 @@ defmodule SeeThroughBurrito.SvgExport do
   @moduledoc "Export decomposed layers as SVG with embedded base64 images"
 
   require Logger
-  import XmlBuilder
 
   @doc "Create SVG document with layer stack"
   def to_svg(layers, depth_map, opts \\ []) do
@@ -10,65 +9,56 @@ defmodule SeeThroughBurrito.SvgExport do
 
     width = Keyword.get(opts, :width, 1024)
     height = Keyword.get(opts, :height, 1024)
-    viewbox = "0 0 #{width} #{height}"
 
-    svg_doc =
-      element(:svg, [xmlns: "http://www.w3.org/2000/svg", viewBox: viewbox, width: width, height: height], [
-        element(:defs, [], [
-          # Embed depth map as pattern
-          depth_pattern(depth_map),
-          # Define layer styles
-          element(:style, [], [text(layer_styles())])
-        ]),
-        # Add layers as g elements with embedded images
-        layers
-        |> Enum.with_index()
-        |> Enum.map(&layer_group(&1, opts))
-        |> Enum.intersperse(newline()),
-        # Metadata
-        element(:metadata, [], [
-          element(:rdf, [
-            "xmlns:rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-          ], [
-            element("rdf:Description", [about: ""], [
-              element(:"export:generatedBy", [], [text("SeeThroughBurrito")]),
-              element(:"export:timestamp", [], [text(DateTime.utc_now() |> to_string())]),
-              element(:"export:layerCount", [], [text(length(layers) |> to_string())])
-            ])
-          ])
-        ])
-      ])
-
-    {:ok, to_string(svg_doc)}
+    svg = build_svg(layers, depth_map, width, height)
+    {:ok, svg}
   end
 
-  defp layer_group({%{name: name, image: image}, idx}, opts) do
-    opacity = Keyword.get(opts, :opacity, 1.0)
-    b64_image = encode_image_b64(image)
+  defp build_svg(layers, depth_map, width, height) do
+    layers_svg = layers |> Enum.with_index() |> Enum.map(&layer_svg(&1))
+    styles = layer_styles()
+    depth_pattern = encode_image_b64(depth_map)
+    timestamp = DateTime.utc_now() |> DateTime.to_iso8601()
 
-    element(:g, [id: "layer-#{idx}", class: "layer", "data-name": name, opacity: "#{opacity}"], [
-      element(:image, [
-        href: "data:image/png;base64,#{b64_image}",
-        width: "100%",
-        height: "100%",
-        preserveAspectRatio: "none"
-      ], []),
-      element(:title, [], [text(name)]),
-      # Add metadata
-      element(:metadata, [], [
-        element(:"layer:name", [], [text(name)]),
-        element(:"layer:index", [], [text(idx |> to_string())]),
-        element(:"layer:type", [], [text("raster")])
-      ])
-    ])
+    """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 #{width} #{height}" width="#{width}" height="#{height}">
+      <defs>
+        <style>
+          #{styles}
+        </style>
+        <pattern id="depth_pattern" width="100%" height="100%" patternUnits="objectBoundingBox">
+          <image href="data:image/png;base64,#{depth_pattern}" width="100%" height="100%"/>
+        </pattern>
+      </defs>
+      <g id="layers">
+        #{Enum.join(layers_svg, "\n  ")}
+      </g>
+      <metadata>
+        <rdf:Description xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                         xmlns:export="http://weftspun.art/see-through/"
+                         export:generatedBy="SeeThroughBurrito"
+                         export:timestamp="#{timestamp}"
+                         export:layerCount="#{length(layers)}"/>
+      </metadata>
+    </svg>
+    """
   end
 
-  defp depth_pattern(depth_map) do
-    b64_depth = encode_image_b64(depth_map)
+  defp layer_svg({%{name: name, image: _image}, idx}) do
+    b64_image = encode_image_b64(nil)
 
-    element(:pattern, [id: "depth_pattern", width: "100%", height: "100%", patternUnits: "objectBoundingBox"], [
-      element(:image, [href: "data:image/png;base64,#{b64_depth}", width: "100%", height: "100%"], [])
-    ])
+    """
+    <g id="layer-#{idx}" class="layer" data-name="#{name}" opacity="1.0">
+      <image href="data:image/png;base64,#{b64_image}" width="100%" height="100%" preserveAspectRatio="none"/>
+      <title>#{name}</title>
+      <metadata>
+        <layer:name xmlns:layer="http://weftspun.art/see-through/">#{name}</layer:name>
+        <layer:index>#{idx}</layer:index>
+        <layer:type>raster</layer:type>
+      </metadata>
+    </g>
+    """
   end
 
   defp layer_styles() do
@@ -83,9 +73,8 @@ defmodule SeeThroughBurrito.SvgExport do
   end
 
   @doc "Convert tensor to base64-encoded PNG"
-  defp encode_image_b64(tensor) do
-    # TODO: Implement PNG encoding
-    # For now, return placeholder
+  defp encode_image_b64(_tensor) do
+    # Placeholder 1x1 transparent PNG
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
   end
 
@@ -118,20 +107,16 @@ defmodule SeeThroughBurrito.SvgExport do
     end
   end
 
-  defp single_layer_svg(image, name) do
-    b64 = encode_image_b64(image)
+  defp single_layer_svg(_image, name) do
+    b64 = encode_image_b64(nil)
 
-    svg_doc =
-      element(:svg, [xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 1024 1024", width: 1024, height: 1024], [
-        element(:image, [
-          href: "data:image/png;base64,#{b64}",
-          width: "100%",
-          height: "100%"
-        ], []),
-        element(:title, [], [text(name)])
-      ])
-
-    to_string(svg_doc)
+    """
+    <?xml version="1.0" encoding="UTF-8"?>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+      <image href="data:image/png;base64,#{b64}" width="100%" height="100%"/>
+      <title>#{name}</title>
+    </svg>
+    """
   end
 
   @doc "Generate layer manifest JSON"

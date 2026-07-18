@@ -102,21 +102,19 @@ defmodule SeeThroughBurrito.Layers do
     Nx.clip(alpha, 0.0, 1.0)
   end
 
-  @doc "Composite layers in Z-order"
-  defn composite_layers(layers, alphas) do
-    # Simple over compositing
-    Enum.reduce_while(
-      Enum.zip(layers, alphas),
-      Nx.zeros({layers |> hd |> Nx.shape |> elem(0), 4}),
-      fn {layer, alpha}, acc ->
-        new_acc =
-          alpha
-          |> Nx.expand_dims(-1)
-          |> Nx.concatenate([acc])
+  @doc "Composite layers in Z-order using over blending"
+  def composite_layers(layers, alphas) do
+    # Simple over compositing - fold alphas over layers
+    layers
+    |> Enum.zip(alphas)
+    |> Enum.reduce(nil, fn {layer, alpha}, acc ->
+      alpha_expanded = Nx.expand_dims(alpha, -1)
 
-        {:cont, new_acc}
+      case acc do
+        nil -> Nx.concatenate([layer, alpha_expanded], axis: 2)
+        _acc -> Nx.add(acc, Nx.multiply(layer, alpha_expanded))
       end
-    )
+    end)
   end
 
   defp load_layerdiff_model(opts) do
