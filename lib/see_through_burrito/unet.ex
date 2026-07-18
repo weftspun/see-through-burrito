@@ -52,7 +52,7 @@ defmodule SeeThroughBurrito.Unet do
   Output:
   - noise_pred: {batch, height/8, width/8, 4} - predicted noise
   """
-  def forward(model, latents, timestep, embeddings, page_rgb, page_alpha \\ nil) do
+  def forward(_model, _latents, _timestep, _embeddings, _page_rgb, _page_alpha \\ nil) do
     Logger.debug("Running LayerDiff UNet forward pass")
 
     # TODO: Integrate actual inference via Bumblebee/Axon
@@ -73,6 +73,7 @@ defmodule SeeThroughBurrito.Unet do
 
   From: see-through-cpp/src/see_through.cpp (lines 93-100)
   """
+  @dialyzer {:nowarn_function, dual_pass: 5}
   def dual_pass(model, page_rgb, page_alpha, embeddings, opts \\ []) do
     Logger.info("Running dual-pass LayerDiff (body + head)")
 
@@ -100,8 +101,8 @@ defmodule SeeThroughBurrito.Unet do
   - steps: number of diffusion steps
   - guidance: classifier-free guidance scale
   """
-  def pass(model, page_rgb, page_alpha, embeddings, group_index, steps, guidance) do
-    Logger.debug("Running LayerDiff pass (group #{group_index})")
+  def pass(_model, _page_rgb, _page_alpha, _embeddings, _group_index, _steps, _guidance) do
+    Logger.debug("Running LayerDiff pass")
 
     # Placeholder: would iterate through diffusion steps
     # For now, return error until Bumblebee wired

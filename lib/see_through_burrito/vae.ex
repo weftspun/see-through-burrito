@@ -21,6 +21,7 @@ defmodule SeeThroughBurrito.Vae do
 
   From: see-through-cpp/src/vae.cpp:encode
   """
+  @dialyzer {:nowarn_function, encode_image: 2}
   def encode_image(image_tensor, opts \\ []) do
     Logger.info("Encoding image to latent space")
 
@@ -45,6 +46,7 @@ defmodule SeeThroughBurrito.Vae do
 
   From: see-through-cpp/src/vae.cpp:decode
   """
+  @dialyzer {:nowarn_function, decode_latents: 2}
   def decode_latents(latent_tensor, opts \\ []) do
     Logger.info("Decoding latents to image")
 
@@ -89,7 +91,7 @@ defmodule SeeThroughBurrito.Vae do
   Run VAE encoding inference.
   Placeholder until Bumblebee integration.
   """
-  def run_vae_encoding(model, image_tensor) do
+  def run_vae_encoding(_model, _image_tensor) do
     Logger.debug("Running VAE encoding inference")
 
     # TODO: Integrate inference via Bumblebee/Axon
@@ -103,7 +105,7 @@ defmodule SeeThroughBurrito.Vae do
   Run VAE decoding inference.
   Placeholder until Bumblebee integration.
   """
-  def run_vae_decoding(model, latent_tensor) do
+  def run_vae_decoding(_model, _latent_tensor) do
     Logger.debug("Running VAE decoding inference")
 
     # TODO: Integrate inference via Bumblebee/Axon

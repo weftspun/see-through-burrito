@@ -10,8 +10,9 @@ defmodule SeeThroughBurrito do
 
   def version, do: "0.1.0"
 
-  @doc "Process an anime illustration into semantic layers"
   @doc """
+  Process an anime illustration into semantic layers.
+
   Accepts optional adapters via :adapters key in opts for dependency injection.
 
   Example (testing with mocks):
@@ -45,7 +46,6 @@ defmodule SeeThroughBurrito do
     end
   end
 
-  @doc "Default production adapters"
   defp default_adapters do
     %{
       images: SeeThroughBurrito.Images,

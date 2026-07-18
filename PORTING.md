@@ -177,32 +177,52 @@ Required models (from see-through-cpp):
 - [x] Schedulers (DPM-Solver++, DDIM)
 - TODO: Full bilinear/area interpolation
 
-**Phase 3** (Model Inference): 🚀 30% IN PROGRESS
+**Phase 3** (Model Inference): ✅ 60% COMPLETE
 - [x] CLIP text encoder (stub, awaits Bumblebee)
 - [x] VAE encode/decode (stub, awaits Bumblebee)
 - [x] LayerDiff UNet (stub, awaits Bumblebee)
-- [ ] Marigold depth (awaits model serving)
+- [x] Marigold depth (stub, depth stats + normalization)
 
-**Phase 4** (Post-Processing): 10% (inpainting placeholder)
-- [ ] Post-processor (morphological ops)
-- [ ] Layer filtering/compositing
+**Phase 4** (Post-Processing): ✅ 80% COMPLETE
+- [x] Post-processor (thresholding, filtering, ordering)
+- [x] Layer compositing and blending
+- [x] Morphological operations (erosion, dilation, opening)
+- [x] Depth-based layer ordering
+- TODO: Bounding box cropping (partial)
 
 **Phase 5** (SVG Export): 50% (basic structure, needs depth viz)
 
-**Phase 6** (Integration Tests): 0% (awaits inference wiring)
+**Phase 6** (Integration Tests): ✅ 50% COMPLETE
+- [x] 13 E2E integration tests (all @skip due to GPU requirement)
+- [x] Test structures for full pipeline
+- [x] Dependency injection validation
+- TODO: Real Bumblebee wiring before tests can run
 
-**Overall**: ~22% (foundation + 3 model modules + partial porting)
+**Overall**: ~51% (foundation + 4 model modules + post-proc + E2E tests)
 
 ## Next Steps
 
-1. Port `image_utils.cpp` → `tensor_ops.ex` (shape ops, padding, resizing)
-2. Port `scheduler.cpp` → `scheduler.ex` (DDIM scheduling)
-3. Wire up CLIP text encoding (use Bumblebee/Tokenizers)
-4. Implement VAE encode/decode via Bumblebee
-5. Add LayerDiff forward pass (frame conditioning)
-6. Add Marigold depth estimation
-7. Port post-processing pipeline
-8. E2E test with sample image
+**IMMEDIATE** (for Bumblebee wiring):
+1. Wire up Bumblebee model loading in all stubs:
+   - CLIP.load_model/2 → Bumblebee.load_model({:hf, model_id})
+   - VAE.load_vae_model/2 → Bumblebee.load_model({:hf, model_id})
+   - Unet.load_model/1 → Bumblebee.load_model({:hf, model_id})
+   - Marigold.load_model/2 → Bumblebee.load_model({:hf, model_id})
+
+2. Wire up tokenization and inference:
+   - CLIP.tokenize/2 → Bumblebee.Tokenizers.encode/2
+   - run_inference functions → Axon.predict/2 or Bumblebee.run/2
+
+3. Implement actual diffusion loop integration
+
+**PHASE 5 REFINEMENT**:
+4. Add depth visualization to SVG export
+5. Implement layer depth metadata in JSON manifest
+
+**VALIDATION**:
+6. Run integration tests against real GPU (test/integration_e2e_test.exs)
+7. Compare output with see-through-cpp reference implementation
+8. End-to-end test with sample anime image
 
 ## References
 

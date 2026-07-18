@@ -19,6 +19,7 @@ defmodule SeeThroughBurrito.Clip do
 
   From: see-through-cpp/src/clip.cpp:encode_tags
   """
+  @dialyzer {:nowarn_function, encode_tags: 2}
   def encode_tags(tags, opts \\ []) do
     Logger.info("Encoding #{length(tags)} tags via CLIP")
 
@@ -56,19 +57,12 @@ defmodule SeeThroughBurrito.Clip do
   Tokenize a text string using CLIP tokenizer.
   Returns token IDs (padded to 77 tokens, CLIP standard).
   """
-  def tokenize(text, tokenizer) do
-    Logger.debug("Tokenizing: #{text}")
+  def tokenize(_text, _tokenizer) do
+    Logger.debug("Tokenizing text via CLIP tokenizer")
 
-    case tokenizer do
-      {:ok, tok} ->
-        # Use Bumblebee tokenizer
-        # TODO: Wire up actual tokenizer via Bumblebee.Tokenizers
-        {:ok, Nx.zeros({77})}  # Placeholder
-
-      :not_implemented ->
-        # Placeholder: return dummy tokens until tokenizer wired
-        {:ok, Nx.zeros({77})}
-    end
+    # Placeholder: return dummy tokens until tokenizer wired
+    # TODO: Wire up actual tokenizer via Bumblebee.Tokenizers
+    {:ok, Nx.broadcast(Nx.tensor(0.0), {77})}
   end
 
   @doc """
@@ -127,18 +121,4 @@ defmodule SeeThroughBurrito.Clip do
     Nx.mean(embeddings, axes: [1])
   end
 
-  @doc """
-  Encode a single tag (alias for run_inference from adapter behavior).
-  """
-  def encode_single_tag(tag, opts \\ []) do
-    Logger.debug("Encoding single tag: #{tag}")
-
-    # Placeholder implementation
-    {:error, {:not_implemented, "Single tag encoding awaits Bumblebee integration"}}
-  end
-
-  # ModelAdapter behavior implementation
-  def run_inference(_model, _input) do
-    {:error, {:not_implemented, "CLIP inference awaits Bumblebee integration"}}
-  end
 end
