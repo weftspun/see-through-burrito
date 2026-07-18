@@ -1,8 +1,12 @@
 # see-through-burrito
 
+🚨 **GPU MANDATORY** — This project requires an NVIDIA GPU with CUDA. No CPU fallback.
+
 Elixir implementation of [See-Through](https://github.com/weftspun/see-through) (Shitagaki Lab, SIGGRAPH 2026):
 decompose anime illustrations into up to 24 semantic layers using neural networks, with GPU acceleration via
 ExLA and self-contained executable packaging via Burrito.
+
+**See [GPU_SETUP_REQUIRED.md](GPU_SETUP_REQUIRED.md) to configure your system before running any commands.**
 
 ```
 see-through-burrito: Anime illustration decomposition
