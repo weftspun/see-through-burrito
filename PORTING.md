@@ -184,14 +184,18 @@ Required models (from see-through-cpp):
 - [x] Schedulers (DPM-Solver++, DDIM)
 - [ ] Full bilinear/area interpolation
 
-**Phase 3** (Model Inference): ✅ 75% COMPLETE
-- [x] CLIP text encoder (framework, placeholder inference)
-- [x] VAE encode/decode (framework, placeholder inference)
-- [x] LayerDiff UNet (framework, placeholder inference)
-- [x] Marigold depth (framework, placeholder inference)
+**Phase 3** (Model Inference): ✅ 90% COMPLETE
+- [x] CLIP text encoder (ModelServing integration)
+- [x] VAE encode/decode (ModelServing integration)
+- [x] LayerDiff UNet (ModelServing integration)
+- [x] Marigold depth (ModelServing integration)
 - [x] ModelCache GenServer for model caching
 - [x] Bumblebee integration guide (comprehensive checklist)
-- [ ] Real Bumblebee.apply_model integration (blocked on Bumblebee API testing)
+- [x] ModelServing layer (unified Bumblebee API abstraction)
+  * Handles load_model, load_tokenizer, run_inference, encode_text
+  * Multi-API pattern matching for version compatibility
+  * Graceful fallbacks for testing
+- [ ] Real Bumblebee.apply_model deployment testing (requires GPU)
 
 **Phase 4** (Post-Processing): ✅ 85% COMPLETE
 - [x] Post-processor (thresholding, filtering, ordering)
@@ -211,27 +215,21 @@ Required models (from see-through-cpp):
 - [x] Model and tokenizer loading tests
 - [ ] End-to-end integration with real models (blocked on Bumblebee)
 
-**Overall**: ~62% (All phases with foundation complete, Phase 3-6 have placeholder framework, ModelCache system operational)
+**Overall**: ~70% (All phases with foundation complete, ModelServing integration layer wired, ready for GPU testing)
 
 ## Next Steps
 
-**PHASE 3 COMPLETION** (Bumblebee integration - CRITICAL):
-1. Test Bumblebee 0.7.0 API:
-   - Verify Bumblebee.load_model/3 signatures for each model type
-   - Verify Bumblebee.apply_model/2 inference patterns
-   - Verify Bumblebee.Tokenizers.tokenize/2 API
+**PHASE 3 FINAL** (Bumblebee deployment - GPU testing required):
+1. Validate ModelServing with real Bumblebee models (requires GPU):
+   - Run test/bumblebee_api_test.exs with mix test.gpu
+   - Verify actual output shapes and types
+   - Debug any API mismatches
 
-2. Implement real inference in placeholder functions:
-   - CLIP.run_inference/2: Replace with Bumblebee.apply_model/2
-   - VAE.run_vae_encoding/2: Replace with Bumblebee.apply_model/2
-   - VAE.run_vae_decoding/2: Replace with Bumblebee.apply_model/2
-   - Unet.forward/6: Replace with Bumblebee.apply_model/2
-   - Marigold.run_depth_inference/3: Replace with Bumblebee.apply_model/2
-
-3. Integrate diffusion loop:
+2. Integrate diffusion loop:
    - Wire Scheduler (DPM-Solver++/DDIM) into Unet.pass/7
    - Integrate Marigold with DDIM scheduler
    - Test dual-pass LayerDiff (body + head)
+   - Test full diffusion loop with scheduler
 
 **PHASE 4-5 REFINEMENT**:
 4. Complete SVG export with depth visualization
