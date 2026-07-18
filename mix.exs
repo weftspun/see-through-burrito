@@ -31,8 +31,9 @@ defmodule SeeThroughBurrito.MixProject do
       {:safetensors, "~> 0.1.3"},
       {:tokenizers, "~> 0.5.1"},
 
-      # Property-based testing
+      # Testing
       {:stream_data, "~> 1.0", only: :test},
+      {:benchee, "~> 1.0", only: :dev},
 
       # HTTP client for model downloads
       {:httpoison, "~> 2.0"},
