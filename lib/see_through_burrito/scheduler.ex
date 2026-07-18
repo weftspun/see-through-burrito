@@ -10,8 +10,6 @@ defmodule SeeThroughBurrito.Scheduler do
   Note: Bumblebee 0.7.0 may provide these directly via Bumblebee.Diffusion
   """
 
-  require Logger
-
   @doc """
   Initialize DPM-Solver++ 2M SDE scheduler.
 

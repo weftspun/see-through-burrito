@@ -106,8 +106,8 @@ defmodule SeeThroughBurrito.Unet do
   Model outputs: {batch, H, W, 4} where batch includes all 13/11 tags
   Returns: list of {tag_name, rgba_image} pairs
   """
-  def outputs_to_layers(model_output, group_index) do
-    Logger.debug("Converting UNet output to layers (group #{group_index})")
+  def outputs_to_layers(_model_output, _group_index) do
+    Logger.debug("Converting UNet output to layers")
 
     # Placeholder
     {:error, :not_implemented}
