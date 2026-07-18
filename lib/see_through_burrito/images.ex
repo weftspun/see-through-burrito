@@ -2,14 +2,14 @@ defmodule SeeThroughBurrito.Images do
   @moduledoc "Image loading, preprocessing, and manipulation"
 
   require Logger
-  import Nx.Defn
 
-  @doc "Load an image from file"
+  @doc "Load an image from file as RGB tensor (0-1 range)"
   def load(path) do
+    Logger.info("Loading image: #{path}")
+
     case Image.open(path) do
       {:ok, image} ->
-        Logger.info("Loaded image: #{path}")
-        {:ok, image}
+        to_rgb_tensor(image)
 
       {:error, reason} ->
         Logger.error("Failed to load image #{path}: #{inspect(reason)}")
@@ -19,26 +19,51 @@ defmodule SeeThroughBurrito.Images do
 
   @doc "Convert image to RGB tensor (0-1 range)"
   def to_rgb_tensor(image) do
-    case Image.to_binary(image, :rgb) do
-      {:ok, binary} ->
-        width = Image.width(image)
-        height = Image.height(image)
+    try do
+      # Image library returns Vix image, convert via as_tensor or binary
+      width = Image.width(image)
+      height = Image.height(image)
 
-        binary
+      # Use Image.write to get binary data
+      case Image.write(image, suffix: ".ppm") do
+        {:ok, binary} ->
+          # Parse PPM format (simple, uncompressed)
+          parse_ppm_binary(binary, width, height)
+
+        {:error, reason} ->
+          {:error, {:rgb_conversion_failed, reason}}
+      end
+    rescue
+      e ->
+        Logger.error("Image conversion error: #{inspect(e)}")
+        {:error, {:image_conversion_error, e}}
+    end
+  end
+
+  # Parse PPM binary format to tensor
+  defp parse_ppm_binary(binary, width, height) do
+    # PPM format: "P6\n{width} {height}\n255\n{raw_rgb_bytes}"
+    # Skip header
+    case String.split(binary, "\n", parts: 4) do
+      [_format, _dims, _max, rgb_data] ->
+        rgb_data
         |> Nx.from_binary(:u8)
         |> Nx.reshape({height, width, 3})
         |> Nx.as_type(:f32)
         |> Nx.divide(255.0)
+        |> then(&{:ok, &1})
 
-      {:error, reason} ->
-        {:error, {:rgb_conversion_failed, reason}}
+      _ ->
+        {:error, {:ppm_parse_failed, "Invalid PPM format"}}
     end
+  rescue
+    _e -> {:error, {:ppm_parse_error, binary}}
   end
 
-  @doc "Normalize image for model input"
-  defn normalize(tensor, mean \\ [0.485, 0.456, 0.406], std \\ [0.229, 0.224, 0.225]) do
-    mean = Nx.tensor(mean)
-    std = Nx.tensor(std)
+  @doc "Normalize image for model input (ImageNet normalization)"
+  def normalize(tensor) do
+    mean = Nx.tensor([0.485, 0.456, 0.406])
+    std = Nx.tensor([0.229, 0.224, 0.225])
 
     tensor
     |> Nx.subtract(mean)

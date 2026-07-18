@@ -103,16 +103,16 @@ defmodule SeeThroughBurrito.Layers do
   end
 
   @doc "Composite layers in Z-order using over blending"
-  def composite_layers(layers, alphas) do
-    # Simple over compositing - fold alphas over layers
-    layers
-    |> Enum.zip(alphas)
+  def composite_layers(layers, alphas) when is_list(layers) and is_list(alphas) do
+    # Simple over compositing - accumulate weighted contributions
+    Enum.zip(layers, alphas)
     |> Enum.reduce(nil, fn {layer, alpha}, acc ->
-      alpha_expanded = Nx.expand_dims(alpha, -1)
+      alpha_expanded = Nx.new_axis(alpha, -1)
+      weighted = Nx.multiply(layer, alpha_expanded)
 
       case acc do
-        nil -> Nx.concatenate([layer, alpha_expanded], axis: 2)
-        _acc -> Nx.add(acc, Nx.multiply(layer, alpha_expanded))
+        nil -> weighted
+        result -> Nx.add(result, weighted)
       end
     end)
   end

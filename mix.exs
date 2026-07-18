@@ -22,11 +22,14 @@ defmodule SeeThroughBurrito.MixProject do
   defp deps do
     [
       # Numerical computation (GPU-first, CUDA via ExLA)
-      {:nx, "~> 0.9"},
-      {:exla, "~> 0.9"},
+      {:nx, "~> 0.12"},
+      {:exla, "~> 0.12"},
 
-      # ML model management
-      {:bumblebee, "~> 0.5"},
+      # ML model management (latest with Axon/Safetensors support)
+      {:bumblebee, "~> 0.7.0"},
+      {:axon, "~> 0.8.1"},
+      {:safetensors, "~> 0.1.3"},
+      {:tokenizers, "~> 0.5.1"},
 
       # Property-based testing
       {:stream_data, "~> 1.0", only: :test},

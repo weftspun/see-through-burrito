@@ -36,9 +36,11 @@ defmodule SeeThroughBurrito.Inpaint do
   end
 
   @doc "Detect holes/transparent regions in layer"
-  defn detect_holes(image_rgba) do
-    # Assume alpha channel is last dimension
-    alpha = Nx.slice(image_rgba, [0, 0, 3], :infinity)
+  def detect_holes(image_rgba) do
+    # Assume alpha channel is last dimension [H, W, 4]
+    # Extract alpha channel
+    [h, w, _c] = Nx.shape(image_rgba)
+    alpha = Nx.slice(image_rgba, [0, 0, 3], [h, w, 1]) |> Nx.squeeze(axes: [2])
     # Holes are regions with low alpha
     Nx.less(alpha, 0.5)
   end
@@ -117,9 +119,10 @@ defmodule SeeThroughBurrito.Inpaint do
   end
 
   @doc "Blend inpainted regions smoothly"
-  defn blend_inpainted(original, inpainted, mask) do
+  def blend_inpainted(original, inpainted, mask) do
     # Use mask as blend factor (0 = original, 1 = inpainted)
-    mask_expanded = Nx.expand_dims(mask, -1)
+    mask_expanded = mask |> Nx.new_axis(-1)
+
     Nx.add(
       Nx.multiply(original, Nx.subtract(1.0, mask_expanded)),
       Nx.multiply(inpainted, mask_expanded)

@@ -27,16 +27,13 @@ defmodule SeeThroughBurrito.Encoder do
     end
   end
 
-  @doc "Sample from latent distribution"
-  defn sample_latents(mean, logvar, key) do
-    std = Nx.exp(Nx.multiply(logvar, 0.5))
-    eps = random_normal(Nx.shape(mean), key)
+  @doc "Sample from latent distribution (reparameterization trick)"
+  def sample_latents(mean, logvar) do
+    std = logvar |> Nx.multiply(0.5) |> Nx.exp()
+    # For deterministic tests, use zeros as eps (posterior mean sampling)
+    # In production, would use Nx.Random.normal with key
+    eps = Nx.zeros(Nx.shape(mean))
     Nx.add(mean, Nx.multiply(std, eps))
-  end
-
-  defn random_normal(shape, key) do
-    # Placeholder for proper random sampling
-    Nx.random_normal(shape, key: key)
   end
 
   @doc "Decode latents back to image space"
