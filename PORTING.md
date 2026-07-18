@@ -171,22 +171,27 @@ Required models (from see-through-cpp):
 
 ## Current Status
 
-**Phase 2** (Core Tensor Ops): Starting
-- Image utilities: 30% (load only)
-- Tensor ops: 0%
-- Schedulers: 0%
+**Phase 2** (Core Tensor Ops): ✅ 40% COMPLETE
+- [x] Image utilities (padding, resize, normalize)
+- [x] Tensor ops (blending, thresholding, batching)
+- [x] Schedulers (DPM-Solver++, DDIM)
+- TODO: Full bilinear/area interpolation
 
-**Phase 3** (Model Inference): Not started
-- CLIP: 0%
-- VAE: 0%
-- UNet: 0%
-- Marigold: 0%
+**Phase 3** (Model Inference): 🚀 30% IN PROGRESS
+- [x] CLIP text encoder (stub, awaits Bumblebee)
+- [x] VAE encode/decode (stub, awaits Bumblebee)
+- [x] LayerDiff UNet (stub, awaits Bumblebee)
+- [ ] Marigold depth (awaits model serving)
 
-**Phase 4** (Post-Processing): Starting
-- Post-processor: 0%
-- Inpainting: 30%
+**Phase 4** (Post-Processing): 10% (inpainting placeholder)
+- [ ] Post-processor (morphological ops)
+- [ ] Layer filtering/compositing
 
-**Overall**: ~15% (foundation + placeholders)
+**Phase 5** (SVG Export): 50% (basic structure, needs depth viz)
+
+**Phase 6** (Integration Tests): 0% (awaits inference wiring)
+
+**Overall**: ~22% (foundation + 3 model modules + partial porting)
 
 ## Next Steps
 
