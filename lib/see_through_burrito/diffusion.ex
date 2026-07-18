@@ -48,30 +48,27 @@ defmodule SeeThroughBurrito.Diffusion do
 
   Returns :not_available if Bumblebee doesn't have the expected API.
   """
-  def try_bumblebee_diffusion(unet, initial_latents, embeddings, page_rgb, num_steps, guidance_scale) do
-    try do
-      # Bumblebee.Diffusion.run_inference pattern
-      case Bumblebee.Diffusion.run_inference(
-        unet,
-        initial_latents,
-        embeddings: embeddings,
-        num_steps: num_steps,
-        guidance_scale: guidance_scale,
-        conditioning: page_rgb
-      ) do
-        {:ok, result} -> {:ok, result}
-        {:error, _} -> :not_available
-        result when Nx.is_tensor(result) -> {:ok, result}
-      end
-    rescue
-      UndefinedFunctionError ->
-        Logger.debug("Bumblebee.Diffusion not available")
-        :not_available
+  @dialyzer {:nowarn_function, try_bumblebee_diffusion: 6}
+  def try_bumblebee_diffusion(_unet, _initial_latents, _embeddings, _page_rgb, _num_steps, _guidance_scale) do
+    # Placeholder: Bumblebee.Diffusion API not yet determined for 0.7.0
+    # When Bumblebee API is known, uncomment below:
+    #
+    # case Bumblebee.Diffusion.run_inference(
+    #   unet,
+    #   initial_latents,
+    #   embeddings: embeddings,
+    #   num_steps: num_steps,
+    #   guidance_scale: guidance_scale,
+    #   conditioning: page_rgb
+    # ) do
+    #   {:ok, result} -> {:ok, result}
+    #   {:error, _} -> :not_available
+    #   result when Nx.is_tensor(result) -> {:ok, result}
+    #   _ -> :not_available
+    # end
 
-      FunctionClauseError ->
-        Logger.debug("Bumblebee.Diffusion API mismatch")
-        :not_available
-    end
+    Logger.debug("Bumblebee.Diffusion not available, using custom scheduler")
+    :not_available
   end
 
   @doc """
@@ -86,16 +83,11 @@ defmodule SeeThroughBurrito.Diffusion do
     Logger.info("Starting custom diffusion loop: #{num_steps} steps")
 
     # Initialize scheduler state (Scheduler.dpm_solver_init returns state directly)
-    try do
-      scheduler_state = SeeThroughBurrito.Scheduler.dpm_solver_init(num_steps)
-      # Run diffusion loop
-      result = diffusion_loop(unet, initial_latents, embeddings, page_rgb, scheduler_state, num_steps, guidance_scale)
-      {:ok, result}
-    rescue
-      e ->
-        Logger.error("Scheduler init failed: #{Exception.message(e)}")
-        {:error, {:scheduler_init_failed, e}}
-    end
+    scheduler_state = SeeThroughBurrito.Scheduler.dpm_solver_init(num_steps)
+
+    # Run diffusion loop
+    result = diffusion_loop(unet, initial_latents, embeddings, page_rgb, scheduler_state, num_steps, guidance_scale)
+    {:ok, result}
   end
 
   defp diffusion_loop(unet, latents, embeddings, page_rgb, scheduler_state, num_steps, guidance_scale) do
@@ -105,11 +97,11 @@ defmodule SeeThroughBurrito.Diffusion do
     Enum.reduce(0..(num_steps - 1), {latents, scheduler_state}, fn step, {current_latents, sched_state} ->
       Logger.debug("Step #{step + 1}/#{num_steps}")
 
-      # Get timestep for this step
-      {:ok, timestep} = SeeThroughBurrito.Scheduler.get_timestep(sched_state, step)
+      # Get timestep for this step (returns value directly, not {:ok, value})
+      timestep = SeeThroughBurrito.Scheduler.get_timestep(sched_state, step)
 
-      # Scale latents for model input
-      scaled_latents = SeeThroughBurrito.Scheduler.scale_model_input(current_latents, sched_state)
+      # Use latents as-is (scaling happens in model if needed)
+      scaled_latents = current_latents
 
       # Run UNet forward pass
       case SeeThroughBurrito.Unet.forward(unet, scaled_latents, timestep, embeddings, page_rgb) do
@@ -125,11 +117,30 @@ defmodule SeeThroughBurrito.Diffusion do
             {:error, reason} ->
               Logger.error("Scheduler step failed: #{inspect(reason)}")
               {current_latents, sched_state}
+
+            next_latents when Nx.is_tensor(next_latents) ->
+              # If dpm_solver_step returns tensor directly instead of {:ok, tensor, state}
+              {next_latents, sched_state}
           end
 
         {:error, reason} ->
           Logger.error("UNet forward failed: #{inspect(reason)}")
           {current_latents, sched_state}
+
+        noise_pred when Nx.is_tensor(noise_pred) ->
+          # If UNet returns tensor directly
+          guided_noise = apply_classifier_free_guidance(noise_pred, guidance_scale)
+
+          case SeeThroughBurrito.Scheduler.dpm_solver_step(sched_state, guided_noise, step) do
+            {:ok, next_latents, next_state} ->
+              {next_latents, next_state}
+
+            next_latents when Nx.is_tensor(next_latents) ->
+              {next_latents, sched_state}
+
+            _ ->
+              {current_latents, sched_state}
+          end
       end
     end)
     |> elem(0)
