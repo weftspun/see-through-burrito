@@ -24,19 +24,9 @@ defmodule SeeThroughBurrito.Unet do
     Logger.info("Loading LayerDiff UNet model")
 
     model_id = "shitagaki-lab/layerdiff-unet"
-    model_cache = Path.join(cache_dir, "unet")
-    File.mkdir_p!(model_cache)
 
-    # TODO: Integrate Bumblebee model loading:
-    # {:ok, model} = Bumblebee.load_model(
-    #   {:hf, model_id},
-    #   type: :unet,
-    #   variant: :layerdiff,
-    #   cache_dir: model_cache
-    # )
-
-    # Placeholder until Bumblebee wired
-    {:ok, %{id: model_id, type: :layerdiff_unet, cache_dir: model_cache}}
+    # Use ModelServing layer for consistent Bumblebee API handling
+    SeeThroughBurrito.ModelServing.load_model(model_id, :unet, cache_dir: cache_dir)
   end
 
   @doc """
@@ -52,17 +42,18 @@ defmodule SeeThroughBurrito.Unet do
   Output:
   - noise_pred: {batch, height/8, width/8, 4} - predicted noise
   """
-  def forward(_model, _latents, _timestep, _embeddings, _page_rgb, _page_alpha \\ nil) do
+  def forward(model, latents, timestep, embeddings, page_rgb, _page_alpha \\ nil) do
     Logger.debug("Running LayerDiff UNet forward pass")
 
-    # TODO: Integrate actual inference via Bumblebee/Axon
-    # {:ok, noise_pred} = Bumblebee.run_inference(
-    #   model,
-    #   {latents, timestep, embeddings, page_rgb, page_alpha}
-    # )
+    case model do
+      nil ->
+        {:error, {:invalid_model, "Model is nil"}}
 
-    # Placeholder
-    {:error, {:not_implemented, "LayerDiff UNet inference awaits Bumblebee integration"}}
+      _model ->
+        # Prepare input: pack all conditioning info
+        input = {latents, timestep, embeddings, page_rgb}
+        SeeThroughBurrito.ModelServing.run_inference(model, input)
+    end
   end
 
   @doc """

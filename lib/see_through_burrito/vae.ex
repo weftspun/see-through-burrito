@@ -73,46 +73,40 @@ defmodule SeeThroughBurrito.Vae do
   def load_vae_model(model_id, cache_dir) do
     Logger.debug("Loading VAE: #{model_id}")
 
-    model_cache = Path.join(cache_dir, "vae")
-    File.mkdir_p!(model_cache)
-
-    # TODO: Integrate Bumblebee model loading:
-    # {:ok, model} = Bumblebee.load_model(
-    #   {:hf, model_id},
-    #   type: :autoencoder,
-    #   cache_dir: model_cache
-    # )
-
-    # Placeholder until Bumblebee wired
-    {:ok, %{id: model_id, type: :vae, cache_dir: model_cache}}
+    # Use ModelServing layer for consistent Bumblebee API handling
+    SeeThroughBurrito.ModelServing.load_model(model_id, :vae, cache_dir: cache_dir)
   end
 
   @doc """
   Run VAE encoding inference.
-  Placeholder until Bumblebee integration.
   """
-  def run_vae_encoding(_model, _image_tensor) do
+  def run_vae_encoding(model, image_tensor) do
     Logger.debug("Running VAE encoding inference")
 
-    # TODO: Integrate inference via Bumblebee/Axon
-    # {:ok, latents} = Bumblebee.run_inference(model, image_tensor)
+    case model do
+      nil ->
+        {:error, {:invalid_model, "Model is nil"}}
 
-    # Placeholder
-    {:error, {:not_implemented, "VAE encoding awaits Bumblebee integration"}}
+      _model ->
+        # Use ModelServing layer
+        SeeThroughBurrito.ModelServing.run_inference(model, image_tensor)
+    end
   end
 
   @doc """
   Run VAE decoding inference.
-  Placeholder until Bumblebee integration.
   """
-  def run_vae_decoding(_model, _latent_tensor) do
+  def run_vae_decoding(model, latent_tensor) do
     Logger.debug("Running VAE decoding inference")
 
-    # TODO: Integrate inference via Bumblebee/Axon
-    # {:ok, image} = Bumblebee.run_inference(model, latent_tensor)
+    case model do
+      nil ->
+        {:error, {:invalid_model, "Model is nil"}}
 
-    # Placeholder
-    {:error, {:not_implemented, "VAE decoding awaits Bumblebee integration"}}
+      _model ->
+        # Use ModelServing layer
+        SeeThroughBurrito.ModelServing.run_inference(model, latent_tensor)
+    end
   end
 
   @doc """

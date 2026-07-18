@@ -52,32 +52,24 @@ defmodule SeeThroughBurrito.Marigold do
   def load_model(model_id, cache_dir) do
     Logger.debug("Loading Marigold model: #{model_id}")
 
-    model_cache = Path.join(cache_dir, "marigold")
-    File.mkdir_p!(model_cache)
-
-    # TODO: Integrate Bumblebee model loading:
-    # {:ok, model} = Bumblebee.load_model(
-    #   {:hf, model_id},
-    #   type: :depth_estimation,
-    #   cache_dir: model_cache
-    # )
-
-    # Placeholder until Bumblebee wired
-    {:ok, %{id: model_id, type: :marigold, cache_dir: model_cache}}
+    # Use ModelServing layer for consistent Bumblebee API handling
+    SeeThroughBurrito.ModelServing.load_model(model_id, :depth_estimation, cache_dir: cache_dir)
   end
 
   @doc """
   Run depth inference via Marigold.
-  Placeholder until Bumblebee integration.
   """
-  def run_depth_inference(_model, _image_tensor, _steps) do
+  def run_depth_inference(model, image_tensor, _steps) do
     Logger.debug("Running Marigold depth inference")
 
-    # TODO: Integrate inference via Bumblebee/Axon with DDIM scheduler
-    # Process: image → UNet loop → depth map
+    case model do
+      nil ->
+        {:error, {:invalid_model, "Model is nil"}}
 
-    # Placeholder
-    {:error, {:not_implemented, "Marigold inference awaits Bumblebee integration"}}
+      _model ->
+        # Use ModelServing layer for inference
+        SeeThroughBurrito.ModelServing.run_inference(model, image_tensor)
+    end
   end
 
   @doc """

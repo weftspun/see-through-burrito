@@ -58,24 +58,10 @@ defmodule SeeThroughBurrito.Clip do
   Returns token IDs (padded to 77 tokens, CLIP standard).
   """
   def tokenize(text, tokenizer) do
-    Logger.debug("Tokenizing: #{text}")
+    Logger.debug("Tokenizing: #{String.slice(text, 0..30)}")
 
-    case tokenizer do
-      %{type: :clip_tokenizer} ->
-        # Real Bumblebee tokenizer available
-        try do
-          # TODO: Use Bumblebee.Tokenizers.encode/2 once API stable
-          # For now, simulate tokenization
-          token_ids = Nx.broadcast(Nx.tensor(0.0), {77})
-          {:ok, token_ids}
-        rescue
-          _e -> {:error, :tokenization_failed}
-        end
-
-      :placeholder ->
-        # Placeholder for tests
-        {:ok, Nx.broadcast(Nx.tensor(0.0), {77})}
-    end
+    # Use ModelServing layer for consistent API
+    SeeThroughBurrito.ModelServing.encode_text(tokenizer, text)
   end
 
   @doc """
@@ -85,12 +71,9 @@ defmodule SeeThroughBurrito.Clip do
     Logger.debug("Loading tokenizer for #{model_id}")
 
     cache_dir = Keyword.get(opts, :cache_dir, "/tmp/see-through-models")
-    tokenizer_cache = Path.join(cache_dir, "tokenizers")
-    File.mkdir_p!(tokenizer_cache)
 
-    # TODO: Integrate Bumblebee.Tokenizers.load(model_id, cache_dir: tokenizer_cache)
-    # For now, return placeholder marker
-    {:ok, :placeholder}
+    # Use ModelServing layer for consistent API
+    SeeThroughBurrito.ModelServing.load_tokenizer(model_id, cache_dir: cache_dir)
   end
 
   @doc """
@@ -100,19 +83,9 @@ defmodule SeeThroughBurrito.Clip do
     Logger.debug("Loading CLIP model: #{model_id}")
 
     cache_dir = Keyword.get(opts, :cache_dir, "/tmp/see-through-models")
-    model_cache = Path.join(cache_dir, "clip")
-    File.mkdir_p!(model_cache)
 
-    # TODO: Replace with real Bumblebee once model loading is tested
-    # {:ok, model} = Bumblebee.load_model(
-    #   {:hf, model_id},
-    #   type: :text,
-    #   architecture: :clip_text_model,
-    #   cache_dir: model_cache
-    # )
-
-    # Return placeholder with expected structure
-    {:ok, %{id: model_id, type: :clip_text, cache_dir: model_cache}}
+    # Use ModelServing layer for consistent Bumblebee API handling
+    SeeThroughBurrito.ModelServing.load_model(model_id, :clip_text, cache_dir: cache_dir)
   end
 
   @doc """
@@ -123,19 +96,12 @@ defmodule SeeThroughBurrito.Clip do
     Logger.debug("Running CLIP inference on #{length(token_ids)} samples")
 
     case model do
-      %{type: :clip_text} ->
-        # TODO: Integrate actual Bumblebee inference:
-        # {:ok, embeddings} = Bumblebee.apply_model(
-        #   model,
-        #   token_ids,
-        #   output_key: :text_embeds
-        # )
+      nil ->
+        {:error, {:invalid_model, "Model is nil"}}
 
-        # For now, return placeholder error (tests marked @skip)
-        {:error, {:not_implemented, "CLIP inference awaits Bumblebee wiring"}}
-
-      _other ->
-        {:error, {:invalid_model, "Model must have type: :clip_text"}}
+      _model ->
+        # Use ModelServing layer for consistent API
+        SeeThroughBurrito.ModelServing.run_inference(model, token_ids)
     end
   end
 
