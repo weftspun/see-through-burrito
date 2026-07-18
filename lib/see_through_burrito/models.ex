@@ -40,7 +40,7 @@ defmodule SeeThroughBurrito.Models do
   @doc "Placeholder for future Bumblebee integration"
   def run_inference(_model, _input, _opts \\ []) do
     # TODO: Integrate with Bumblebee 0.7.0 when Axon models are wired
-    Logger.warn("Model inference not yet implemented - awaiting Bumblebee integration")
+    Logger.warning("Model inference not yet implemented - awaiting Bumblebee integration")
     {:error, {:not_implemented, "Inference requires Bumblebee Axon model wiring"}}
   end
 end

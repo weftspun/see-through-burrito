@@ -2,7 +2,6 @@ defmodule SeeThroughBurrito.Encoder do
   @moduledoc "VAE encoder for image-to-latent conversion"
 
   require Logger
-  import Nx.Defn
 
   @doc "Encode image to VAE latent space"
   def encode_to_latents(image_tensor, opts \\ []) do
@@ -15,7 +14,7 @@ defmodule SeeThroughBurrito.Encoder do
             {:ok, latents}
 
           {:ok, result} ->
-            Logger.warn("Unexpected encoder output: #{inspect(Map.keys(result))}")
+            Logger.warning("Unexpected encoder output: #{inspect(Map.keys(result))}")
             {:error, {:unexpected_output, result}}
 
           {:error, reason} ->
@@ -32,7 +31,7 @@ defmodule SeeThroughBurrito.Encoder do
     std = logvar |> Nx.multiply(0.5) |> Nx.exp()
     # For deterministic tests, use zeros as eps (posterior mean sampling)
     # In production, would use Nx.Random.normal with key
-    eps = Nx.zeros(Nx.shape(mean))
+    eps = Nx.broadcast(Nx.tensor(0.0), Nx.shape(mean))
     Nx.add(mean, Nx.multiply(std, eps))
   end
 

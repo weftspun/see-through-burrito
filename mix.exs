@@ -31,6 +31,9 @@ defmodule SeeThroughBurrito.MixProject do
       {:safetensors, "~> 0.1.3"},
       {:tokenizers, "~> 0.5.1"},
 
+      # Executable packaging (optional for dev - omit if unavailable)
+      # {:burrito, "~> 0.3"},
+
       # Testing
       {:stream_data, "~> 1.0", only: :test},
       {:benchee, "~> 1.0", only: :dev},

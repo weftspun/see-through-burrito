@@ -50,7 +50,7 @@ defmodule SeeThroughBurrito.ModelDownload do
   def fetch(model_id, opts \\ []) do
     cache_dir = Keyword.get(opts, :cache_dir, cache_directory())
 
-    with {filename, size_mb, desc} <- get_model_spec(model_id),
+    with {filename, _size_mb, desc} <- get_model_spec(model_id),
          :ok <- File.mkdir_p(cache_dir),
          output_path = Path.join(cache_dir, String.replace(filename, ".zst", "")),
          {:ok, _} <- download_and_decompress(model_id, filename, output_path, opts) do
@@ -105,7 +105,7 @@ defmodule SeeThroughBurrito.ModelDownload do
     end
   end
 
-  defp download_and_decompress(model_id, filename, output_path, opts) do
+  defp download_and_decompress(_model_id, filename, output_path, opts) do
     url = "#{@release_base}/#{@release_tag}/#{filename}"
     temp_file = output_path <> ".zst"
 

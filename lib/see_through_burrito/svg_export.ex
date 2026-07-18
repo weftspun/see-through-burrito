@@ -72,8 +72,8 @@ defmodule SeeThroughBurrito.SvgExport do
     """
   end
 
-  @doc "Convert tensor to base64-encoded PNG"
   defp encode_image_b64(_tensor) do
+    # Placeholder 1x1 transparent PNG
     # Placeholder 1x1 transparent PNG
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
   end

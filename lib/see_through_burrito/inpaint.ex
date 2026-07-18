@@ -2,7 +2,6 @@ defmodule SeeThroughBurrito.Inpaint do
   @moduledoc "Inpainting module for hole filling using LaMa or similar"
 
   require Logger
-  import Nx.Defn
 
   @doc "Fill holes in decomposed layers"
   def fill_holes(layers, opts \\ []) do
@@ -17,7 +16,7 @@ defmodule SeeThroughBurrito.Inpaint do
         {:ok, results}
 
       results ->
-        Logger.warn("Only #{length(results)}/#{length(layers)} layers inpainted successfully")
+        Logger.warning("Only #{length(results)}/#{length(layers)} layers inpainted successfully")
         {:error, {:inpainting_incomplete, results}}
     end
   end
@@ -52,7 +51,7 @@ defmodule SeeThroughBurrito.Inpaint do
     case load_lama_model(opts) do
       {:ok, lama_serving} ->
         # Prepare input: concatenate image and mask
-        input = Nx.concatenate([image, Nx.expand_dims(mask, -1)], axis: 2)
+        input = Nx.concatenate([image, Nx.new_axis(mask, -1)], axis: 2)
 
         case SeeThroughBurrito.Models.run_inference(lama_serving, input) do
           {:ok, inpainted} ->

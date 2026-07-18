@@ -31,7 +31,7 @@ defmodule SeeThroughBurrito.Pipeline do
   end
 
   @doc "Encode prompt text to embeddings"
-  def encode_prompt(prompt, tokenizer, text_encoder) do
+  def encode_prompt(prompt, _tokenizer, text_encoder) do
     Logger.debug("Encoding prompt: #{prompt}")
 
     case SeeThroughBurrito.Models.run_inference(text_encoder, prompt) do
@@ -50,7 +50,7 @@ defmodule SeeThroughBurrito.Pipeline do
     diffuse_loop(unet, latents, embeddings, steps, guidance_scale, [])
   end
 
-  defp diffuse_loop(_unet, latents, _embeddings, 0, _guidance, acc) do
+  defp diffuse_loop(_unet, _latents, _embeddings, 0, _guidance, acc) do
     {:ok, Enum.reverse(acc)}
   end
 
